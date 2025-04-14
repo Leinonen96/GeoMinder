@@ -42,7 +42,7 @@ export default function MapScreen({ navigation }) {
   if (errorMsg) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>{errorMsg}</Text>
+        <Text style={{ color: colors.text }}>{errorMsg || ''}</Text>
       </View>
     );
   }
@@ -75,8 +75,8 @@ export default function MapScreen({ navigation }) {
             latitude: region.latitude,
             longitude: region.longitude,
           }}
-          title="You are here"
-          description="Your current location"
+          title={region ? "You are here" : ""}
+          description={region ? "Your current location" : ""}
         />
       </MapView>
       {/* Existing Add Event button */}
