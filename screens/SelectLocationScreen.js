@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import MapView from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SelectLocationScreen({ navigation, route }) {
@@ -9,21 +10,25 @@ export default function SelectLocationScreen({ navigation, route }) {
     : { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.01, longitudeDelta: 0.01 };
 
   const [region, setRegion] = useState(initialLocation);
+  const [userLocation, setUserLocation] = useState(null);
 
-  const onRegionChangeComplete = (newRegion) => {
-    setRegion(newRegion);
-  };
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation(loc.coords);
+      }
+    })();
+  }, []);
+
+  const onRegionChangeComplete = newRegion => setRegion(newRegion);
 
   const confirmLocation = () => {
-    const selectedLocation = {
-      latitude: region.latitude,
-      longitude: region.longitude,
-    };
-
+    const selectedLocation = { latitude: region.latitude, longitude: region.longitude };
     if (route.params?.onLocationSelected) {
       route.params.onLocationSelected(selectedLocation);
     }
-
     navigation.goBack();
   };
 
@@ -33,7 +38,10 @@ export default function SelectLocationScreen({ navigation, route }) {
         style={styles.map}
         initialRegion={initialLocation}
         onRegionChangeComplete={onRegionChangeComplete}
-      />
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+      >
+      </MapView>
       <View style={styles.markerFixed} pointerEvents="none">
         <MaterialIcons name="location-pin" size={48} color="red" />
       </View>
@@ -60,13 +68,16 @@ const styles = StyleSheet.create({
     left: '50%',
     width: 150,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderWidth: 2,
+    borderColor: '#6200EE',
+    backgroundColor: 'transparent',
     borderRadius: 6,
     transform: [{ translateX: -75 }],
   },
   selectButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#6200EE',
+    fontSize: 18,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
 });

@@ -6,6 +6,8 @@ import { StatusBar } from 'react-native'; // Correct import
 import Tabs from './navigation/Tabs';
 import AddEventScreen from './screens/AddEventScreen';
 import SelectLocationScreen from './screens/SelectLocationScreen';
+import SelectTriggerScreen from './screens/SelectTriggerScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +43,11 @@ export default function App() {
             name="SelectLocation"
             component={SelectLocationScreen}
             options={{ title: 'Select Location' }}
+          />
+          <Stack.Screen
+            name="SelectTrigger"
+            component={SelectTriggerScreen}
+            options={{ title: 'Select Trigger' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

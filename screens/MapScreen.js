@@ -68,6 +68,7 @@ export default function MapScreen({ navigation }) {
         style={styles.map}
         region={region}
         ref={mapViewRef}
+        showsUserLocation={true}
         customMapStyle={colors.mapStyle || []} // Optional: Apply custom map style if defined in the theme
       >
         <Marker
