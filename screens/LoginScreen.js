@@ -1,47 +1,37 @@
-// LoginScreen.js
-import React from 'react';
-import { View, Button, StyleSheet } from 'react-native';
-import { auth } from '../config/firebaseConfig';
-import * as Google from 'expo-auth-session/providers/google';
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import { googleClientId } from "../config/googleConfig";
+// src/screens/LoginScreen.js
+import React from 'react'
+import { View, StyleSheet, Alert } from 'react-native'
+import { Button, ActivityIndicator } from 'react-native-paper'
+import useAuth from '../hooks/useAuth'
 
+export default function LoginScreen() {
+  const { user, loading, request, promptAsync } = useAuth()
 
-
-export default function LoginScreen({ navigation }) {
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: googleClientId,
-  });
-
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential)
-        .then((userCredential) => {
-          navigation.replace('Main');
-        })
-        .catch((error) => {
-          console.error('Google sign-in error:', error);
-        });
+  // once `user` is set, navigation will swap away from this screen
+  const onPress = async () => {
+    try {
+      await promptAsync()
+    } catch {
+      Alert.alert('Sign-in Failed', 'Please try again')
     }
-  }, [response]);
+  }
 
   return (
     <View style={styles.container}>
-      <Button
-        disabled={!request}
-        title="Login with Google"
-        onPress={() => promptAsync()}
-      />
+      {loading
+        ? <ActivityIndicator size="large" />
+        : <Button
+            disabled={!request}
+            mode="contained"
+            onPress={onPress}
+          >
+            Login with Google
+          </Button>
+      }
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+  container: { flex:1, justifyContent:'center', alignItems:'center' }
+})

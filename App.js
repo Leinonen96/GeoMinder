@@ -1,12 +1,15 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Provider as PaperProvider } from 'react-native-paper'; // Removed MD3DarkTheme import
-import { StatusBar } from 'react-native'; // Correct import
-import Tabs from './navigation/Tabs';
-import AddEventScreen from './screens/AddEventScreen';
-import SelectLocationScreen from './screens/SelectLocationScreen';
-import SelectTriggerScreen from './screens/SelectTriggerScreen';
+import React from 'react'
+import { ActivityIndicator, View, StyleSheet } from 'react-native'
+import { Provider as PaperProvider } from 'react-native-paper'
+import { NavigationContainer } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+
+import useAuth         from './hooks/useAuth'
+import LoginScreen     from './screens/LoginScreen'
+import Tabs            from './navigation/Tabs'
+import AddEventScreen  from './screens/AddEventScreen'
+import SelectLocation  from './screens/SelectLocationScreen'
+import SelectTrigger   from './screens/SelectTriggerScreen'
 
 
 const Stack = createNativeStackNavigator();
@@ -24,33 +27,51 @@ const Stack = createNativeStackNavigator();
 // };
 
 export default function App() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    )
+  }
+
   return (
     <PaperProvider>
-      <StatusBar barStyle="light-content" /> {/* Correct usage */}
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen 
-            name="Main" 
-            component={Tabs} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="AddEvent"
-            component={AddEventScreen} 
-            options={{ title: 'Add Event' }} 
-          />
-          <Stack.Screen
-            name="SelectLocation"
-            component={SelectLocationScreen}
-            options={{ title: 'Select Location' }}
-          />
-          <Stack.Screen
-            name="SelectTrigger"
-            component={SelectTriggerScreen}
-            options={{ title: 'Select Trigger' }}
-          />
+          {user
+            ? <>
+                <Stack.Screen
+                  name="Main"
+                  component={Tabs}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="AddEvent"
+                  component={AddEventScreen}
+                  options={{ headerShown: true, title: 'Add Event' }}
+                />
+                <Stack.Screen
+                  name="SelectLocation"
+                  component={SelectLocation}
+                  options={{ headerShown: true, title: 'Select Location' }}
+                />
+                <Stack.Screen
+                  name="SelectTrigger"
+                  component={SelectTrigger}
+                  options={{ headerShown: true, title: 'Select Trigger' }}
+                />
+              </>
+            : <Stack.Screen name="Login" component={LoginScreen} />
+          }
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
-  );
+  )
 }
+
+const styles = StyleSheet.create({
+  loader: { flex:1, justifyContent:'center', alignItems:'center' }
+})

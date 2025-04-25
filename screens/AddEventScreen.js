@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { TextInput, Button, Text, Divider, Snackbar, Switch, IconButton, ProgressBar } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -95,7 +95,7 @@ export default function AddEventScreen({ navigation, route }) {
         return copy;
       });
   
-      // clear them out so we don’t re‑apply
+      // Reset navigation params to avoid re-triggering
       navigation.setParams({
         triggerIndex: undefined,
         selectedLocation: undefined,
@@ -107,6 +107,15 @@ export default function AddEventScreen({ navigation, route }) {
     route.params?.selectedLocation,
     route.params?.selectedRadius,
   ]);
+
+  // Add this useEffect to enable the default back arrow in the header
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: 'Add Event',
+      headerBackTitleVisible: false,
+    });
+  }, [navigation]);
 
   // Image picker
   const pickImage = useCallback(async () => {
@@ -126,6 +135,7 @@ export default function AddEventScreen({ navigation, route }) {
     }
   }, []);
 
+  // Add trigger functionality
   const addTrigger = () => {
     setTriggers(ts => [
       ...ts,
@@ -133,6 +143,7 @@ export default function AddEventScreen({ navigation, route }) {
     ]);
   };
 
+  // Toggle trigger settings
   const triggerToggle = (i, key) => {
     setTriggers(ts => {
       const copy = [...ts];
@@ -200,203 +211,205 @@ export default function AddEventScreen({ navigation, route }) {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <Text style={styles.header}>Add New Event</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.container}>
+            <Text style={styles.header}>Add New Event</Text>
 
-          <TextInput
-            label="Event Title"
-            value={title}
-            onChangeText={setTitle}
-            mode="outlined"
-            style={styles.input}
-          />
-
-          <TextInput
-            label="Description"
-            value={description}
-            onChangeText={setDescription}
-            mode="outlined"
-            multiline
-            style={[styles.input, { minHeight: 60 }]}
-          />
-
-          {/* Start Date & Time */}
-          <View style={styles.row}>
-            <Button mode="outlined" onPress={() => setShowStartDatePicker(true)} style={styles.datetimeButton}>
-              <Text style={styles.datetimeButtonText}>
-                {startDate
-                  ? `Start Date: ${startDate.toLocaleDateString('en-US')}`
-                  : 'Select Start Date'}
-              </Text>
-            </Button>
-            {showStartDatePicker && (
-              <DateTimePicker
-                value={startDate || new Date()}
-                mode="date"
-                display="default"
-                onChange={(event, date) => {
-                  setShowStartDatePicker(false);
-                  setStartDate(date);
-                }}
-              />
-            )}
-
-            <Button mode="outlined" onPress={() => setShowStartTimePicker(true)} style={styles.datetimeButton}>
-              <Text style={styles.datetimeButtonText}>
-                {startTime
-                  ? `Start Time: ${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`
-                  : 'Select Start Time'}
-              </Text>
-            </Button>
-            {showStartTimePicker && (
-              <DateTimePicker
-                value={startTime || new Date()}
-                mode="time"
-                display="default"
-                onChange={(event, time) => {
-                  setShowStartTimePicker(false);
-                  setStartTime(time);
-                }}
-              />
-            )}
-          </View>
-
-          {/* End Date & Time */}
-          <View style={styles.row}>
-            <Button mode="outlined" onPress={() => setShowEndDatePicker(true)} style={styles.datetimeButton}>
-              <Text style={styles.datetimeButtonText}>
-                {endDate
-                  ? `End Date: ${endDate.toLocaleDateString('en-US')}`
-                  : 'Select End Date'}
-              </Text>
-            </Button>
-            {showEndDatePicker && (
-              <DateTimePicker
-                value={endDate || new Date()}
-                mode="date"
-                display="default"
-                onChange={(event, date) => {
-                  setShowEndDatePicker(false);
-                  setEndDate(date);
-                }}
-              />
-            )}
-
-            <Button mode="outlined" onPress={() => setShowEndTimePicker(true)} style={styles.datetimeButton}>
-              <Text style={styles.datetimeButtonText}>
-                {endTime
-                  ? `End Time: ${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`
-                  : 'Select End Time'}
-              </Text>
-            </Button>
-            {showEndTimePicker && (
-              <DateTimePicker
-                value={endTime || new Date()}
-                mode="time"
-                display="default"
-                onChange={(event, time) => {
-                  setShowEndTimePicker(false);
-                  setEndTime(time);
-                }}
-              />
-            )}
-          </View>
-
-          {/* Location */}
-          <View style={styles.locationDisplay}>
-            <Text style={styles.locationLabel}>Event Location:</Text>
-            <Text style={styles.locationText}>
-              {locationCoordinate
-                ? `Lat: ${locationCoordinate.latitude.toFixed(4)}, Lng: ${locationCoordinate.longitude.toFixed(4)}`
-                : 'None'}
-            </Text>
-          </View>
-          {/* Button to select location on map */}
-          <Button
-            mode="outlined"
-            onPress={() => {
-              const initialLoc = locationCoordinate || userLocation || { latitude: 37.78825, longitude: -122.4324 };
-              navigation.navigate('SelectLocation', {
-                initialLocation: initialLoc,
-                onLocationSelected: setLocationCoordinate,
-              });
-            }}
-            style={styles.input}
-          >
-            Select on Map
-          </Button>
-
-          { /* Thumbnail Display */}
-          {thumbnail && (
-            <Image
-              source={{ uri: thumbnail }}
-              style={{ ...styles.thumbnail }}
+            <TextInput
+              label="Event Title"
+              value={title}
+              onChangeText={setTitle}
+              mode="outlined"
+              style={styles.input}
             />
-          )}
 
-          {/* Thumbnail Picker */}
-          <Button mode="outlined" onPress={pickImage}>
-            {thumbnail ? 'Change Thumbnail' : 'Select Thumbnail'}
-          </Button>
+            <TextInput
+              label="Description"
+              value={description}
+              onChangeText={setDescription}
+              mode="outlined"
+              multiline
+              style={[styles.input, { minHeight: 60 }]}
+            />
 
-          <Divider style={{ marginVertical: 16 }} />
-          
-          {/* Triggers */}
-          {triggers.map((t, i) => (
-            <View key={i} style={styles.triggerCard}>
-              <View style={styles.row}>
-                <Text>Vibrate</Text>
-                <Switch value={t.vibrate} onValueChange={() => triggerToggle(i, 'vibrate')} />
-                <Text>Sound</Text>
-                <Switch value={t.sound} onValueChange={() => triggerToggle(i, 'sound')} />
-              </View>
-              <Text>
-                Location:{' '}
-                {t.location
-                  ? `${t.location.latitude.toFixed(4)}, ${t.location.longitude.toFixed(4)} (r:${t.radius}m)`
+            {/* Start Date & Time */}
+            <View style={styles.row}>
+              <Button mode="outlined" onPress={() => setShowStartDatePicker(true)} style={styles.datetimeButton}>
+                <Text style={styles.datetimeButtonText}>
+                  {startDate
+                    ? `Start Date: ${startDate.toLocaleDateString('en-US')}`
+                    : 'Select Start Date'}
+                </Text>
+              </Button>
+              {showStartDatePicker && (
+                <DateTimePicker
+                  value={startDate || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, date) => {
+                    setShowStartDatePicker(false);
+                    setStartDate(date);
+                  }}
+                />
+              )}
+
+              <Button mode="outlined" onPress={() => setShowStartTimePicker(true)} style={styles.datetimeButton}>
+                <Text style={styles.datetimeButtonText}>
+                  {startTime
+                    ? `Start Time: ${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`
+                    : 'Select Start Time'}
+                </Text>
+              </Button>
+              {showStartTimePicker && (
+                <DateTimePicker
+                  value={startTime || new Date()}
+                  mode="time"
+                  display="default"
+                  onChange={(event, time) => {
+                    setShowStartTimePicker(false);
+                    setStartTime(time);
+                  }}
+                />
+              )}
+            </View>
+
+            {/* End Date & Time */}
+            <View style={styles.row}>
+              <Button mode="outlined" onPress={() => setShowEndDatePicker(true)} style={styles.datetimeButton}>
+                <Text style={styles.datetimeButtonText}>
+                  {endDate
+                    ? `End Date: ${endDate.toLocaleDateString('en-US')}`
+                    : 'Select End Date'}
+                </Text>
+              </Button>
+              {showEndDatePicker && (
+                <DateTimePicker
+                  value={endDate || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, date) => {
+                    setShowEndDatePicker(false);
+                    setEndDate(date);
+                  }}
+                />
+              )}
+
+              <Button mode="outlined" onPress={() => setShowEndTimePicker(true)} style={styles.datetimeButton}>
+                <Text style={styles.datetimeButtonText}>
+                  {endTime
+                    ? `End Time: ${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`
+                    : 'Select End Time'}
+                </Text>
+              </Button>
+              {showEndTimePicker && (
+                <DateTimePicker
+                  value={endTime || new Date()}
+                  mode="time"
+                  display="default"
+                  onChange={(event, time) => {
+                    setShowEndTimePicker(false);
+                    setEndTime(time);
+                  }}
+                />
+              )}
+            </View>
+
+            {/* Location */}
+            <View style={styles.locationDisplay}>
+              <Text style={styles.locationLabel}>Event Location:</Text>
+              <Text style={styles.locationText}>
+                {locationCoordinate
+                  ? `Lat: ${locationCoordinate.latitude.toFixed(4)}, Lng: ${locationCoordinate.longitude.toFixed(4)}`
                   : 'None'}
               </Text>
-              <View style={styles.triggerButtonRow}>
-                <Button
-                  mode="outlined"
-                  onPress={() => {
-                    const initialLoc = t.location || userLocation || { latitude: 0, longitude: 0 };
-                    navigation.navigate('SelectTrigger', {
-                      triggerIndex: i,
-                      initialLocation: initialLoc,
-                      initialRadius: t.radius,
-                      onSelect: (location, radius) => {
-                        setTriggers(ts => {
-                          const copy = [...ts];
-                          copy[i] = { ...copy[i], location, radius };
-                          return copy;
-                        });
-                      },
-                    });
-                  }}
-                >
-                  Select Location
-                </Button>
-                <IconButton icon="delete" iconColor="red" size={24} onPress={() => removeTrigger(i)} />
-              </View>
             </View>
-          ))}
-          <Button mode="outlined" onPress={addTrigger} style={{ marginBottom: 16 }}>
-            + Add Trigger
-          </Button>
+            {/* Button to select location on map */}
+            <Button
+              mode="outlined"
+              onPress={() => {
+                const initialLoc = locationCoordinate || userLocation || { latitude: 37.78825, longitude: -122.4324 };
+                navigation.navigate('SelectLocation', {
+                  initialLocation: initialLoc,
+                  onLocationSelected: setLocationCoordinate,
+                });
+              }}
+              style={styles.input}
+            >
+              Select on Map
+            </Button>
 
-          <Divider style={{ marginVertical: 16 }} />
+            { /* Thumbnail Display */}
+            {thumbnail && (
+              <Image
+                source={{ uri: thumbnail }}
+                style={{ ...styles.thumbnail }}
+              />
+            )}
 
-          {isSavingEvent && (
-            <ProgressBar indeterminate color="green" style={{ marginVertical: 8 }} />
-          )}
+            {/* Thumbnail Picker */}
+            <Button mode="outlined" onPress={pickImage}>
+              {thumbnail ? 'Change Thumbnail' : 'Select Thumbnail'}
+            </Button>
 
-          <Button mode="contained" onPress={handleSave} style={styles.saveButton} disabled={isSigningIn || isSavingEvent}>
-            {isSavingEvent ? 'Saving...' : 'Save Event'}
-          </Button>
-        </View>
-      </ScrollView>
+            <Divider style={{ marginVertical: 16 }} />
+            
+            {/* Triggers */}
+            {triggers.map((t, i) => (
+              <View key={i} style={styles.triggerCard}>
+                <View style={styles.row}>
+                  <Text>Vibrate</Text>
+                  <Switch value={t.vibrate} onValueChange={() => triggerToggle(i, 'vibrate')} />
+                  <Text>Sound</Text>
+                  <Switch value={t.sound} onValueChange={() => triggerToggle(i, 'sound')} />
+                </View>
+                <Text>
+                  Location:{' '}
+                  {t.location
+                    ? `${t.location.latitude.toFixed(4)}, ${t.location.longitude.toFixed(4)} (r:${t.radius}m)`
+                    : 'None'}
+                </Text>
+                <View style={styles.triggerButtonRow}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      const initialLoc = t.location || userLocation || { latitude: 0, longitude: 0 };
+                      navigation.navigate('SelectTrigger', {
+                        triggerIndex: i,
+                        initialLocation: initialLoc,
+                        initialRadius: t.radius,
+                        onSelect: (location, radius) => {
+                          setTriggers(ts => {
+                            const copy = [...ts];
+                            copy[i] = { ...copy[i], location, radius };
+                            return copy;
+                          });
+                        },
+                      });
+                    }}
+                  >
+                    Select Location
+                  </Button>
+                  <IconButton icon="delete" iconColor="red" size={24} onPress={() => removeTrigger(i)} />
+                </View>
+              </View>
+            ))}
+            <Button mode="outlined" onPress={addTrigger} style={{ marginBottom: 16 }}>
+              + Add Trigger
+            </Button>
+
+            <Divider style={{ marginVertical: 16 }} />
+
+            {isSavingEvent && (
+              <ProgressBar indeterminate color="green" style={{ marginVertical: 8 }} />
+            )}
+
+            <Button mode="contained" onPress={handleSave} style={styles.saveButton} disabled={isSigningIn || isSavingEvent}>
+              {isSavingEvent ? 'Saving...' : 'Save Event'}
+            </Button>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
 
       {/* Snackbar */}
       <Snackbar
