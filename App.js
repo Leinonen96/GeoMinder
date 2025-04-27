@@ -3,6 +3,7 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Provider as PaperProvider } from 'react-native-paper'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import './services/firebase'; // Initialize Firebase
 
 import useAuth         from './hooks/useAuth'
 import LoginScreen     from './screens/LoginScreen'
@@ -11,20 +12,8 @@ import AddEventScreen  from './screens/AddEventScreen'
 import SelectLocation  from './screens/SelectLocationScreen'
 import SelectTrigger   from './screens/SelectTriggerScreen'
 
-
+// Importing the necessary components and hooks
 const Stack = createNativeStackNavigator();
-
-// Commented out the theme for now
-// const darkTheme = {
-//   ...MD3DarkTheme,
-//   colors: {
-//     ...MD3DarkTheme.colors,
-//     primary: '#BB86FC',
-//     accent: '#03DAC6',
-//     background: '#121212',
-//     text: '#FFFFFF',
-//   },
-// };
 
 export default function App() {
   const { user, loading } = useAuth()

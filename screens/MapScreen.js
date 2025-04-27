@@ -1,63 +1,68 @@
 // src/screens/MapScreen.js
-import React, { useEffect, useState, useRef } from 'react'
-import { StyleSheet, Dimensions, View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
-import * as Location from 'expo-location'
-import { ActivityIndicator, useTheme } from 'react-native-paper'
-import AddEventButton from '../components/AddEventButton'
-import RecenterButton from '../components/RecenterButton'
-import EventCard from '../components/EventCard'
-import { useEvents } from '../hooks/UseEvents'
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Dimensions, View, Text, Modal, TouchableWithoutFeedback } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+import { ActivityIndicator, useTheme } from 'react-native-paper';
+import AddEventButton from '../components/AddEventButton';
+import RecenterButton from '../components/RecenterButton';
+import EventCard from '../components/EventCard';
+import { useEvents } from '../hooks/UseEvents';
 
 export default function MapScreen({ navigation }) {
-  const { colors } = useTheme()
-  const mapViewRef = useRef(null)
-  const [region, setRegion] = useState(null)
-  const [errorMsg, setErrorMsg] = useState(null)
-  const [selectedEvent, setSelectedEvent] = useState(null)
+  const { colors } = useTheme();
+  const mapViewRef = useRef(null);
+  const [region, setRegion] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const { events, loading, error } = useEvents()
+  const { events, loading, error } = useEvents();
 
   // Fetch user's current location once
   useEffect(() => {
-    let mounted = true
-    ;(async () => {
+    let mounted = true;
+    (async () => {
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync()
-        if (status !== 'granted') throw new Error('Location permission denied')
-        const loc = await Location.getCurrentPositionAsync({})
-        if (!mounted) return
-        const { latitude, longitude } = loc.coords
-        setRegion({ latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 })
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') throw new Error('Location permission denied');
+        const loc = await Location.getCurrentPositionAsync({});
+        if (!mounted) return;
+        const { latitude, longitude } = loc.coords;
+        setRegion({ latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 });
       } catch (e) {
-        if (mounted) setErrorMsg(e.message)
+        if (mounted) setErrorMsg(e.message);
       }
-    })()
-    return () => { mounted = false }
-  }, [])
+    })();
+    return () => { mounted = false; };
+  }, []);
 
-  // Center map back to user
+  // Center map back to user location
   const recenterMap = () => {
     if (mapViewRef.current && region) {
-      mapViewRef.current.animateToRegion(region, 1000)
+      mapViewRef.current.animateToRegion(region, 1000);
     }
-  }
+  };
 
-  // Handle loading or errors
+  // Handle loading states or error conditions
   if (errorMsg || error) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>        
-        <Text style={{ color: colors.text }}>{errorMsg || 'Failed to load events'}</Text>
+        <Text style={{ color: colors.text }}>
+          {errorMsg || 'Failed to load events'}
+        </Text>
       </View>
-    )
+    );
   }
+  
   if (!region || loading) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>        
         <ActivityIndicator animating color={colors.primary} />
-        <Text style={{ color: colors.text }}>{loading ? 'Loading events...' : 'Initializing map...'}</Text>
+        <Text style={{ color: colors.text }}>
+          {loading ? 'Loading events...' : 'Initializing map...'}
+        </Text>
       </View>
-    )
+    );
   }
 
   return (
@@ -73,42 +78,45 @@ export default function MapScreen({ navigation }) {
         {events.map(event => (
           <Marker
             key={event.id}
-            coordinate={{ latitude: event.location.latitude, longitude: event.location.longitude }}
+            coordinate={{ 
+              latitude: event.location.latitude, 
+              longitude: event.location.longitude 
+            }}
             onPress={() => setSelectedEvent(event)}
             tracksViewChanges={false}
           />
         ))}
       </MapView>
 
-      {/* Modal for showing selected event card */}
+      {/* Modal for showing selected event details */}
       <Modal
-  visible={!!selectedEvent}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setSelectedEvent(null)}
->
-  <View style={styles.modalRoot}>
-    {/* 1) the dark backdrop, full-screen, catches taps to dismiss */}
-    <TouchableWithoutFeedback onPress={() => setSelectedEvent(null)}>
-      <View style={styles.modalOverlay} />
-    </TouchableWithoutFeedback>
+        visible={!!selectedEvent}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedEvent(null)}
+      >
+        <View style={styles.modalRoot}>
+          {/* The dark backdrop that catches taps to dismiss */}
+          <TouchableWithoutFeedback onPress={() => setSelectedEvent(null)}>
+            <View style={styles.modalOverlay} />
+          </TouchableWithoutFeedback>
 
-    {/* 2) the actual content sits *after* the overlay, so it's on top */}
-    <View style={styles.modalContent}>
-      {selectedEvent && (
-        <EventCard
-          event={selectedEvent}
-          onPress={() => {}}
-        />
-      )}
-    </View>
-  </View>
-</Modal>
+          {/* The event card content positioned above the overlay */}
+          <View style={styles.modalContent}>
+            {selectedEvent && (
+              <EventCard
+                event={selectedEvent}
+                onPress={() => {}}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
 
       <AddEventButton onPress={() => navigation.navigate('AddEvent')} />
       <RecenterButton onPress={recenterMap} />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -143,4 +151,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8
   }
-})
+});

@@ -3,19 +3,20 @@ import { View, StyleSheet, ScrollView, Image, SafeAreaView, Platform, StatusBar 
 import { TextInput, Button, Text, Divider, Snackbar, Switch, IconButton, ProgressBar } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebaseConfig';
 import { signInAnonymously } from 'firebase/auth';
+import { useCurrentLocation } from '../hooks/useCurrentLocation';
+import { useImagePicker } from '../hooks/useImagePicker';
 
 export default function AddEventScreen({ navigation, route }) {
   // State variables
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [thumbnail, setThumbnail] = useState(null);
+  const { imageUri: thumbnail, pickImage, setImageUri: setThumbnail } = useImagePicker();
   const [triggers, setTriggers] = useState([]);
   const [locationCoordinate, setLocationCoordinate] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
+  const { location: userLocation, error: locationError } = useCurrentLocation();
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -37,22 +38,6 @@ export default function AddEventScreen({ navigation, route }) {
     const combined = new Date(date);
     combined.setHours(time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());
     return combined;
-  }, []);
-
-  // Fetch user's current location on mount
-  useEffect(() => {
-    const fetchUserLocation = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({});
-          setUserLocation(loc.coords);
-        }
-      } catch (error) {
-        console.error('Error fetching user location:', error);
-      }
-    };
-    fetchUserLocation();
   }, []);
 
   // Sign in anonymously if not already signed in
@@ -116,24 +101,6 @@ export default function AddEventScreen({ navigation, route }) {
       headerBackTitleVisible: false,
     });
   }, [navigation]);
-
-  // Image picker
-  const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access the media library is required!');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-    if (!result.canceled && result.assets?.length > 0) {
-      setThumbnail(result.assets[0].uri);
-    }
-  }, []);
 
   // Add trigger functionality
   const addTrigger = () => {

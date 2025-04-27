@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 import { db, auth } from '../config/firebaseConfig';
 
@@ -31,7 +31,8 @@ const EventService = {
       console.error("Error fetching events:", error);
       throw error;
     }
-  }
+  },
+
 };
 
 export default EventService;
