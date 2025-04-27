@@ -1,6 +1,6 @@
 // screens/AddEventScreen.js
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-} from 'react-native'
+} from 'react-native';
 import {
   TextInput,
   Button,
@@ -19,103 +19,67 @@ import {
   Switch,
   IconButton,
   ProgressBar,
-} from 'react-native-paper'
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { signInAnonymously } from 'firebase/auth'
-import { auth } from '../config/firebaseConfig'
-import EventService from '../services/EventService'
-import { useCurrentLocation } from '../hooks/useCurrentLocation'
-import { useImagePicker } from '../hooks/useImagePicker'
+} from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../config/firebaseConfig';
+import EventService from '../services/EventService';
+import { useCurrentLocation } from '../hooks/useCurrentLocation';
+import { useImagePicker } from '../hooks/useImagePicker';
+import { combineDateAndTime } from '../utils/dateTimeUtils';
+import useTriggers from '../hooks/useTriggers';
 
 export default function AddEventScreen({ navigation, route }) {
   // Form state
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const { imageUri: thumbnail, pickImage } = useImagePicker()
-  const [triggers, setTriggers] = useState([])
-  const [locationCoordinate, setLocationCoordinate] = useState(null)
-  const { location: userLocation } = useCurrentLocation()
-  const [startDate, setStartDate] = useState(null)
-  const [startTime, setStartTime] = useState(null)
-  const [endDate, setEndDate] = useState(null)
-  const [endTime, setEndTime] = useState(null)
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const { imageUri: thumbnail, pickImage } = useImagePicker();
+  const {
+    triggers,
+    setTriggers,
+    addTrigger,
+    toggleTrigger,
+    removeTrigger,
+    updateTriggerLocation,
+  } = useTriggers(navigation, route);
+  const [locationCoordinate, setLocationCoordinate] = useState(null);
+  const { location: userLocation } = useCurrentLocation();
+  const [startDate, setStartDate] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [endTime, setEndTime] = useState(null);
 
   // Pickers visibility
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false)
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false)
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false)
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false)
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
   // Async state
-  const [isSigningIn, setIsSigningIn] = useState(false)
-  const [isSavingEvent, setIsSavingEvent] = useState(false)
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
 
   // Snackbar state
-  const [snackbarVisible, setSnackbarVisible] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-
-  // Utility to combine date + time pickers
-  const combineDateAndTime = useCallback((date, time) => {
-    if (!date || !time) return null
-    const combined = new Date(date)
-    combined.setHours(
-      time.getHours(),
-      time.getMinutes(),
-      time.getSeconds(),
-      time.getMilliseconds()
-    )
-    return combined
-  }, [])
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Ensure anonymous auth
   useEffect(() => {
     const signIn = async () => {
-      setIsSigningIn(true)
+      setIsSigningIn(true);
       try {
-        await signInAnonymously(auth)
+        await signInAnonymously(auth);
       } catch (err) {
-        console.error('Anonymous sign-in failed', err)
-        alert('Unable to sign in. Please try again.')
+        console.error('Anonymous sign-in failed', err);
+        alert('Unable to sign in. Please try again.');
       } finally {
-        setIsSigningIn(false)
+        setIsSigningIn(false);
       }
-    }
+    };
     if (!auth.currentUser) {
-      signIn()
+      signIn();
     }
-  }, [])
-
-  // Handle trigger-location selection via params
-  useEffect(() => {
-    const { triggerIndex, selectedLocation, selectedRadius } = route.params || {}
-
-    if (
-      typeof triggerIndex === 'number' &&
-      selectedLocation &&
-      typeof selectedRadius === 'number'
-    ) {
-      setTriggers((ts) => {
-        const copy = [...ts]
-        copy[triggerIndex] = {
-          ...copy[triggerIndex],
-          location: selectedLocation,
-          radius: selectedRadius,
-        }
-        return copy
-      })
-
-      // reset params
-      navigation.setParams({
-        triggerIndex: undefined,
-        selectedLocation: undefined,
-        selectedRadius: undefined,
-      })
-    }
-  }, [
-    route.params?.triggerIndex,
-    route.params?.selectedLocation,
-    route.params?.selectedRadius,
-  ])
+  }, []);
 
   // Configure header
   useEffect(() => {
@@ -123,48 +87,30 @@ export default function AddEventScreen({ navigation, route }) {
       headerShown: true,
       headerTitle: 'Add Event',
       headerBackTitleVisible: false,
-    })
-  }, [navigation])
-
-  // Trigger list ops
-  const addTrigger = () => {
-    setTriggers((ts) => [
-      ...ts,
-      { vibrate: true, sound: true, location: null, radius: 100 },
-    ])
-  }
-  const toggleTrigger = (index, key) => {
-    setTriggers((ts) => {
-      const copy = [...ts]
-      copy[index][key] = !copy[index][key]
-      return copy
-    })
-  }
-  const removeTrigger = useCallback((index) => {
-    setTriggers((ts) => ts.filter((_, i) => i !== index))
-  }, [])
+    });
+  }, [navigation]);
 
   // Save via EventService, then go back
   const handleSave = useCallback(async () => {
-    setIsSavingEvent(true)
+    setIsSavingEvent(true);
 
     if (isSigningIn) {
-      alert('Waiting for sign-in to complete…')
-      setIsSavingEvent(false)
-      return
+      alert('Waiting for sign-in to complete…');
+      setIsSavingEvent(false);
+      return;
     }
     if (!auth.currentUser) {
-      alert('Not signed in. Please try again.')
-      setIsSavingEvent(false)
-      return
+      alert('Not signed in. Please try again.');
+      setIsSavingEvent(false);
+      return;
     }
 
-    const combinedStart = combineDateAndTime(startDate, startTime)
-    const combinedEnd = combineDateAndTime(endDate, endTime)
+    const combinedStart = combineDateAndTime(startDate, startTime);
+    const combinedEnd = combineDateAndTime(endDate, endTime);
     if (!title || !combinedStart || !combinedEnd) {
-      alert('Please fill Title, Start date/time and End date/time.')
-      setIsSavingEvent(false)
-      return
+      alert('Please fill Title, Start date/time and End date/time.');
+      setIsSavingEvent(false);
+      return;
     }
 
     const eventData = {
@@ -175,20 +121,20 @@ export default function AddEventScreen({ navigation, route }) {
       location: locationCoordinate || { latitude: 0, longitude: 0 },
       thumbnailUrl: thumbnail,
       triggers,
-    }
+    };
 
     try {
-      const newId = await EventService.saveEvent(eventData)
-      console.log('Saved event id:', newId)
-      setSnackbarMessage('Event saved!')
-      setSnackbarVisible(true)
-      setIsSavingEvent(false)
+      const newId = await EventService.saveEvent(eventData);
+      console.log('Saved event id:', newId);
+      setSnackbarMessage('Event saved!');
+      setSnackbarVisible(true);
+      setIsSavingEvent(false);
 
-      setTimeout(() => navigation.goBack(), 3000)
+      setTimeout(() => navigation.goBack(), 3000);
     } catch (err) {
-      console.error('Save failed', err)
-      alert('Error saving event. Please try again.')
-      setIsSavingEvent(false)
+      console.error('Save failed', err);
+      alert('Error saving event. Please try again.');
+      setIsSavingEvent(false);
     }
   }, [
     title,
@@ -201,9 +147,8 @@ export default function AddEventScreen({ navigation, route }) {
     thumbnail,
     triggers,
     isSigningIn,
-    combineDateAndTime,
     navigation,
-  ])
+  ]);
 
   return (
     <>
@@ -254,8 +199,8 @@ export default function AddEventScreen({ navigation, route }) {
                   mode="date"
                   display="default"
                   onChange={(_, date) => {
-                    setShowStartDatePicker(false)
-                    setStartDate(date)
+                    setShowStartDatePicker(false);
+                    setStartDate(date);
                   }}
                 />
               )}
@@ -280,8 +225,8 @@ export default function AddEventScreen({ navigation, route }) {
                   mode="time"
                   display="default"
                   onChange={(_, time) => {
-                    setShowStartTimePicker(false)
-                    setStartTime(time)
+                    setShowStartTimePicker(false);
+                    setStartTime(time);
                   }}
                 />
               )}
@@ -305,8 +250,8 @@ export default function AddEventScreen({ navigation, route }) {
                   mode="date"
                   display="default"
                   onChange={(_, date) => {
-                    setShowEndDatePicker(false)
-                    setEndDate(date)
+                    setShowEndDatePicker(false);
+                    setEndDate(date);
                   }}
                 />
               )}
@@ -331,8 +276,8 @@ export default function AddEventScreen({ navigation, route }) {
                   mode="time"
                   display="default"
                   onChange={(_, time) => {
-                    setShowEndTimePicker(false)
-                    setEndTime(time)
+                    setShowEndTimePicker(false);
+                    setEndTime(time);
                   }}
                 />
               )}
@@ -405,11 +350,7 @@ export default function AddEventScreen({ navigation, route }) {
                           t.location || userLocation || { latitude: 0, longitude: 0 },
                         initialRadius: t.radius,
                         onSelect: (loc, radius) => {
-                          setTriggers((ts) => {
-                            const copy = [...ts]
-                            copy[i] = { ...copy[i], location: loc, radius }
-                            return copy
-                          })
+                          updateTriggerLocation(i, loc, radius);
                         },
                       })
                     }
@@ -454,7 +395,7 @@ export default function AddEventScreen({ navigation, route }) {
         <Text style={styles.snackbarText}>{snackbarMessage}</Text>
       </Snackbar>
     </>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -530,4 +471,4 @@ const styles = StyleSheet.create({
     color: 'green',
     fontWeight: 'bold',
   },
-})
+});

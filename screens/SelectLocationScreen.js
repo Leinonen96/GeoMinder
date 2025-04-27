@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useCurrentLocation } from '../hooks/useCurrentLocation';
 
 export default function SelectLocationScreen({ navigation, route }) {
+  const { location: userLocation, loading: locationLoading, error: locationError } = useCurrentLocation();
+  
   const initialLocation = route.params?.initialLocation
     ? { ...route.params.initialLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 }
-    : { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+    : userLocation 
+      ? { ...userLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 }
+      : { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.01, longitudeDelta: 0.01 };
 
   const [region, setRegion] = useState(initialLocation);
-  const [userLocation, setUserLocation] = useState(null);
 
+  // Update region when userLocation becomes available
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({});
-        setUserLocation(loc.coords);
-      }
-    })();
-  }, []);
+    if (userLocation && !route.params?.initialLocation) {
+      setRegion({
+        ...userLocation,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01
+      });
+    }
+  }, [userLocation]);
 
   const onRegionChangeComplete = newRegion => setRegion(newRegion);
 
