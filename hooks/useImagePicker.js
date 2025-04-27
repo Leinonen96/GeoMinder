@@ -7,6 +7,13 @@ import imageService from '../services/imageService';
  * @returns {Object} Image data, pick function, and error state
  */
 export function useImagePicker(options = {}) {
+  // Default options for square cropping
+  const defaultOptions = {
+    aspect: [1, 1],
+    allowsEditing: true,
+    ...options
+  };
+  
   const [imageUri, setImageUri] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,8 +30,8 @@ export function useImagePicker(options = {}) {
       return null;
     }
     
-    // Pick image
-    const { uri, error: pickError } = await imageService.pickImage(options);
+    // Pick image with square cropping options
+    const { uri, error: pickError } = await imageService.pickImage(defaultOptions);
     
     if (pickError) {
       setError(pickError);
@@ -34,7 +41,7 @@ export function useImagePicker(options = {}) {
     
     setLoading(false);
     return uri;
-  }, [options]);
+  }, [defaultOptions]);
 
   return {
     imageUri,

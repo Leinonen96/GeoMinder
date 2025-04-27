@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   animatedWrapper: { borderRadius: 16 },
 
   card: {
-    width: '95%',
+    width: '90%',
     borderRadius: 12,
     borderWidth: 2,
     marginVertical: 12,
@@ -117,7 +117,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  title: { fontSize: 18, flexShrink: 1 },
+  title: { 
+    fontSize: 18, 
+    flexShrink: 1
+  },
 
   image: {
     width: '50%',
