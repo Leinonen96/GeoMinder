@@ -15,7 +15,7 @@ import { useEvents } from '../hooks/UseEvents'
 import ListEventCard from '../components/ListEventCard'
 import EventCard from '../components/EventCard'
 
-export default function ListScreen() {
+export default function ListScreen({ navigation }) {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const { colors } = useTheme()
   const { events, loading, error, reload } = useEvents()
@@ -26,8 +26,6 @@ export default function ListScreen() {
       reload()
     }, [reload])
   )
-
-  const handleEventPress = (event) => setSelectedEvent(event)
 
   // sort active first then by start time
   const sortedEvents = [...events].sort((a, b) => {
@@ -66,7 +64,7 @@ export default function ListScreen() {
           data={sortedEvents}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <ListEventCard event={item} onPress={handleEventPress} />
+            <ListEventCard event={item} onPress={() => setSelectedEvent(item)} />
           )}
           contentContainerStyle={styles.listContent}
         />
@@ -83,7 +81,16 @@ export default function ListScreen() {
             <View style={styles.modalOverlay} />
           </TouchableWithoutFeedback>
           <View style={styles.modalContent}>
-            {selectedEvent && <EventCard event={selectedEvent} />}
+            {selectedEvent && (
+              <EventCard
+                event={selectedEvent}
+                onPress={() => setSelectedEvent(null)}
+                onViewDetails={(id) => {
+                  setSelectedEvent(null)
+                  navigation.navigate('EditEvent', { eventId: id })
+                }}
+              />
+            )}
           </View>
         </View>
       </Modal>

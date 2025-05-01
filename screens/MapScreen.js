@@ -105,10 +105,20 @@ export default function MapScreen({ navigation }) {
             <View style={styles.modalOverlay} />
           </TouchableWithoutFeedback>
           <View style={styles.modalContent}>
-            {selectedEvent && <EventCard event={selectedEvent} />}
+            {selectedEvent && (
+              <EventCard
+                event={selectedEvent}
+                onPress={() => setSelectedEvent(null)}
+                onViewDetails={(id) => {
+                  setSelectedEvent(null)
+                  navigation.navigate('EditEvent', { eventId: id })
+                }}
+              />
+            )}
           </View>
         </View>
       </Modal>
+
 
       <AddEventButton onPress={() => navigation.navigate('AddEvent')} />
       <RecenterButton onPress={recenterMap} />

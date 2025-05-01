@@ -1,76 +1,93 @@
-import React, { useEffect } from 'react'
-import { ActivityIndicator, View, StyleSheet } from 'react-native'
-import { Provider as PaperProvider } from 'react-native-paper'
-import { NavigationContainer } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-
-import usePermissions from './hooks/usePermissions'
-import useGeofencing  from './hooks/useGeofencing'
-import './services/firebase'
-import './tasks/geofenceTask'
-
-import useAuth         from './hooks/useAuth'
-import LoginScreen     from './screens/LoginScreen'
-import Tabs            from './navigation/Tabs'
-import AddEventScreen  from './screens/AddEventScreen'
-import SelectLocation  from './screens/SelectLocationScreen'
-import SelectTrigger   from './screens/SelectTriggerScreen'
-
-import { Platform } from 'react-native'
+// src/App.js
+import React, { useEffect } from 'react';
+import { ActivityIndicator, View, StyleSheet, Alert, Text, Platform } from 'react-native';
+import { Provider as PaperProvider, DefaultTheme as PaperDefaultTheme } from 'react-native-paper';
+import { NavigationContainer, DefaultTheme as NavDefaultTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 
-const Stack = createNativeStackNavigator()
+import useAuth from './hooks/useAuth';
+import usePermissions from './hooks/usePermissions';
+import useGeofencing from './hooks/useGeofencing';
 
-// Notification handler configuration
+import LoginScreen from './screens/LoginScreen';
+import Tabs from './navigation/Tabs';
+import AddEventScreen from './screens/AddEventScreen';
+import SelectLocation from './screens/SelectLocationScreen';
+import SelectTrigger from './screens/SelectTriggerScreen';
+import EditEvent from './screens/EditEventScreen';
+
+import './tasks/geofenceTask'; // defines the background geofence TaskManager task
+
+// Light theme for react-native-paper
+const LightPaperTheme = {
+  ...PaperDefaultTheme,
+  dark: false,
+  colors: {
+    ...PaperDefaultTheme.colors,
+    background: '#ffffff',
+    surface: '#ffffff',
+    primary: '#6200ee',
+    text: '#000000',
+  },
+};
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: true, 
-    shouldSetBadge: false, 
+    shouldPlaySound: true,
+    shouldSetBadge: false,
   }),
 });
 
+const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const { user, loading } = useAuth()
-  const { requestAll }  = usePermissions()
-  
+  const { user, loading } = useAuth();
+  const { requestAll } = usePermissions();
 
-
+  // schedule a quick test notification
   useEffect(() => {
     Notifications.scheduleNotificationAsync({
-      content: { title: '🚀 Test', body: 'Notifications are working!' },
+      content: { title: '🚀 App Started', body: 'GeoMinder is running!' },
       trigger: { seconds: 5 },
-    })
-  }, [])
+    }).catch(console.error);
+  }, []);
 
-  // 1) Ask for location (fg+bg) and notifications on first mount
+  // prompt for location & notifications permissions on first mount
   useEffect(() => {
-    ;(async () => {
-      const { fg, bg, np } = await requestAll()
+    (async () => {
+      const { fg, bg, np } = await requestAll();
       if (fg !== 'granted' || bg !== 'granted') {
-        alert('Location permissions are required.')
+        Alert.alert(
+          'Permissions Required',
+          'Foreground & background location are needed for geofencing.'
+        );
       }
       if (np !== 'granted') {
-        alert('Notifications permission is required for geofence alerts.')
+        Alert.alert(
+          'Permissions Required',
+          'Notifications permission is required for alerts.'
+        );
       }
-    })()
-  }, [])
+    })();
+  }, []);
 
-  // 2) Start geofencing only after permission prompt
-  useGeofencing()
+  // register/unregister geofences whenever your events change
+  useGeofencing();
 
   if (loading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 10 }}>Loading session…</Text>
       </View>
-    )
+    );
   }
 
   return (
-    <PaperProvider>
-      <NavigationContainer>
+    <PaperProvider theme={LightPaperTheme}>
+      <NavigationContainer theme={NavDefaultTheme}>
         <Stack.Navigator screenOptions={{ headerBackTitleVisible: false }}>
           {user ? (
             <>
@@ -79,31 +96,25 @@ export default function App() {
                 component={Tabs}
                 options={{ headerShown: false }}
               />
-              <Stack.Screen
-                name="AddEvent"
-                component={AddEventScreen}
-                options={{ title: 'Add Event' }}
-              />
-              <Stack.Screen
-                name="SelectLocation"
-                component={SelectLocation}
-                options={{ title: 'Select Location' }}
-              />
-              <Stack.Screen
-                name="SelectTrigger"
-                component={SelectTrigger}
-                options={{ title: 'Select Trigger' }}
-              />
+              <Stack.Screen name="AddEvent"  component={AddEventScreen} options={{ title: 'Add Event' }} />
+              <Stack.Screen name="EditEvent" component={EditEvent}    options={{ title: 'Edit Event' }} />
+              <Stack.Screen name="SelectLocation" component={SelectLocation} options={{ title: 'Location' }} />
+              <Stack.Screen name="SelectTrigger"  component={SelectTrigger}  options={{ title: 'Trigger' }} />
             </>
           ) : (
-            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           )}
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  loader: { flex:1, justifyContent:'center', alignItems:'center' }
-})
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+});

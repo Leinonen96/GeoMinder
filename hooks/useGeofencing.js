@@ -1,58 +1,97 @@
-// hooks/useGeofencing.js
-import { useEffect } from 'react'
-import * as Location from 'expo-location'
-import { useEvents } from './UseEvents'   // adjust to your filename casing
-import { saveTriggers }     from '../services/geofenceService'
-import { GEOFENCE_TASK }     from '../tasks/geofenceTask'
-import { makeIdentifier }    from '../utils/geofenceHelpers'
+import { useEffect } from 'react';
+import * as Location from 'expo-location';
+import { useEvents } from './UseEvents';
+import { saveTriggers } from '../services/geofenceService';
+import { GEOFENCE_TASK_NAME } from '../tasks/geofenceTask';
+import { makeIdentifier } from '../utils/geofenceHelpers';
 
+/**
+ * Hook that manages geofence registration based on active events
+ * Automatically registers/unregisters geofences as events change
+ */
 export default function useGeofencing() {
-  const { events, loading } = useEvents()
+  const { events, loading } = useEvents();
 
+  // Register geofences whenever events change
   useEffect(() => {
-    if (loading) return
+    if (loading) {
+      console.log('⚙️ [useGeofencing] waiting for events to load before registering geofences.');
+      return;
+    }
 
-    const now = Date.now()
+    console.log(`⚙️ [useGeofencing] Events loaded (${events.length}), processing for geofences.`);
+    const now = Date.now();
 
-    const allTriggers = events.flatMap(event =>
+    // Extract active triggers from events that should be registered as geofences
+    const activeTriggersToRegister = events.flatMap(event =>
       (event.triggers || [])
         .map((t, idx) => ({ event, trigger: t, idx }))
+        // Only include triggers with location data
         .filter(({ trigger }) => trigger.location != null)
+        // Only include triggers for currently active events
         .filter(({ event }) => {
-          const start = event.startTime.toDate().getTime()
-          const end   = event.endTime.toDate().getTime()
-          return now >= start && now <= end
+          if (!event.startTime?.toDate || !event.endTime?.toDate) {
+              console.warn(`⚙️ [useGeofencing] Skipping event ${event.id} due to invalid start/end time.`);
+              return false;
+          }
+          const start = event.startTime.toDate().getTime();
+          const end = event.endTime.toDate().getTime();
+          return now >= start && now <= end;
         })
         .map(({ event, trigger, idx }) => ({
           identifier: makeIdentifier(event.id, idx),
-          eventId:    event.id,
-          latitude:   trigger.location.latitude,
-          longitude:  trigger.location.longitude,
-          radius:     trigger.radius,
-          sound:      trigger.sound,
-          vibrate:    trigger.vibrate,
-          active:     true,
+          eventId: event.id,
+          latitude: trigger.location.latitude,
+          longitude: trigger.location.longitude,
+          radius: trigger.radius,
+          sound: trigger.sound,
+          vibrate: trigger.vibrate,
+          active: true,
         }))
-    )
+    );
 
-    ;(async () => {
-      console.log('⚙️ [useGeofencing] registering', allTriggers.length, 'triggers')
-      await saveTriggers(allTriggers)
+    // Register geofences
+    (async () => {
+      console.log('⚙️ [useGeofencing] Registering', activeTriggersToRegister.length, 'active triggers.');
 
+      // Save triggers to storage for background task access
       try {
-        console.log('⚙️ [useGeofencing] stopping previous geofences')
-        await Location.stopGeofencingAsync(GEOFENCE_TASK)
+          await saveTriggers(activeTriggersToRegister);
       } catch (e) {
-        console.warn('⚙️ stopGeofencingAsync error:', e)
+          console.error('⚙️ [useGeofencing] Error saving triggers:', e);
       }
 
+      // Stop existing geofences before adding new ones
       try {
-        console.log('⚙️ [useGeofencing] starting geofencing')
-        await Location.startGeofencingAsync(GEOFENCE_TASK, allTriggers)
-        console.log('⚙️ Geofencing started')
+        await Location.stopGeofencingAsync(GEOFENCE_TASK_NAME);
       } catch (e) {
-        console.error('⚙️ startGeofencingAsync error:', e)
+        // Expected error if no geofences were previously registered
+        console.warn('⚙️ [useGeofencing] stopGeofencingAsync:', e);
       }
-    })()
-  }, [events, loading])
+
+      // Skip if no active triggers to register
+      if (activeTriggersToRegister.length === 0) {
+           console.log('⚙️ [useGeofencing] No active triggers to register.');
+           return;
+      }
+
+      // Format triggers for Expo Location API
+      const regionsToRegister = activeTriggersToRegister.map(t => ({
+          identifier: t.identifier,
+          latitude: t.latitude,
+          longitude: t.longitude,
+          radius: t.radius,
+          notifyOnEnter: true,
+          notifyOnExit: false,
+      }));
+
+      try {
+        await Location.startGeofencingAsync(GEOFENCE_TASK_NAME, regionsToRegister);
+        console.log('⚙️ [useGeofencing] Geofencing started successfully.');
+      } catch (e) {
+        console.error('⚙️ [useGeofencing] startGeofencingAsync error:', e);
+      }
+    })();
+
+  }, [events, loading]);
 }

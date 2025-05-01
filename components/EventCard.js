@@ -1,15 +1,18 @@
-// src/components/EventCard.js
 import React from 'react';
-import { StyleSheet, View, Image, Text, ScrollView } from 'react-native';
-import { Card, Title, useTheme } from 'react-native-paper';
+import { StyleSheet, View, Image, ScrollView } from 'react-native';
+import { Card, Title, useTheme, Text, Button } from 'react-native-paper';
 
-export default function EventCard({ event, onPress }) {
+// EventCard component displays event details and handles user interactions
+export default function EventCard({ event, onPress, onViewDetails }) {
   const { colors } = useTheme();
-  const now = Date.now();
-  const isActive =
-    now >= event.startTime.toMillis() && now <= event.endTime.toMillis();
 
-  const accentColor = isActive ? '#4CAF50' : '#FFEB3B';
+  const now = Date.now();
+  // Check if the event is currently active
+  const isActive =
+    event.startTime && event.startTime.toMillis && now >= event.startTime.toMillis() &&
+    event.endTime && event.endTime.toMillis && now <= event.endTime.toMillis();
+
+  const accentColor = isActive ? '#4CAF50' : '#FFEB3B'; // Green for active, Yellow for inactive
 
   const glowStyle = isActive
     ? {
@@ -17,9 +20,19 @@ export default function EventCard({ event, onPress }) {
         shadowRadius: 16,
         shadowOpacity: 0.6,
         shadowOffset: { width: 0, height: 0 },
-        elevation: 8,
+        elevation: 8, // Android shadow
       }
-    : {};
+    : {}; // No glow for inactive
+
+  // Handle "View Details" button press
+  const handleViewDetailsPress = () => {
+    if (onViewDetails && event && event.id) {
+      console.log(`EventCard: Calling onViewDetails callback for event ID: ${event.id}`);
+      onViewDetails(event.id);
+    } else {
+      console.warn("EventCard: onViewDetails callback or event/event.id is missing.");
+    }
+  };
 
   return (
     <View style={[styles.animatedWrapper, glowStyle]}>
@@ -31,24 +44,23 @@ export default function EventCard({ event, onPress }) {
         ]}
       >
         <View style={styles.inner}>
-          {/* Header row */}
+          {/* Header row with thumbnail and title */}
           <View style={styles.headerRow}>
             {event.thumbnailUrl ? (
-              <Image source={{ uri: event.thumbnailUrl }} style={styles.image} />
+              <Image source={{ uri: event.thumbnailUrl }} style={styles.image} resizeMode="cover" />
             ) : (
-              <View style={[styles.image, { backgroundColor: '#eee' }]} />
+              <View style={[styles.image, { backgroundColor: '#eee' }]} /> // Placeholder for missing image
             )}
-
             <Title numberOfLines={2} style={styles.title}>
               {event.title}
             </Title>
           </View>
 
-          {/* Scrollable description - Modified for consistent behavior */}
-          <View 
-            style={styles.descriptionWrapper} 
+          {/* Scrollable description */}
+          <View
+            style={styles.descriptionWrapper}
             onStartShouldSetResponder={() => true}
-            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()} // Prevent modal closing on touch
           >
             <ScrollView
               style={styles.descriptionContainer}
@@ -61,7 +73,7 @@ export default function EventCard({ event, onPress }) {
               directionalLockEnabled={true}
               overScrollMode="always"
             >
-              <Text 
+              <Text
                 style={[styles.description, { color: colors.text }]}
                 selectable={true}
                 onPress={(e) => e.stopPropagation()}
@@ -87,6 +99,16 @@ export default function EventCard({ event, onPress }) {
               {isActive ? 'Active' : 'Inactive'}
             </Text>
           </View>
+
+          {/* View Details Button */}
+          <Button
+            mode="text"
+            onPress={handleViewDetailsPress}
+            style={styles.detailsButton}
+            labelStyle={styles.detailsButtonLabel}
+          >
+            View Details
+          </Button>
         </View>
       </Card>
     </View>
@@ -117,9 +139,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  title: { 
-    fontSize: 18, 
-    flexShrink: 1
+  title: {
+    fontSize: 18,
+    flexShrink: 1,
+    fontWeight: 'bold',
   },
 
   image: {
@@ -127,6 +150,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginRight: 12,
+    resizeMode: 'cover',
   },
 
   descriptionWrapper: {
@@ -140,12 +164,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     position: 'relative',
     zIndex: 2,
-    height: 'auto', // Allow auto-height between min and max constraints
+    height: 'auto',
   },
 
   descriptionContainer: {
     width: '100%',
-    height: 'auto', // Allow height to be determined by content
+    height: 'auto',
   },
 
   descriptionContent: {
@@ -165,6 +189,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 14,
     borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statusText: { fontSize: 12, fontWeight: 'bold' },
+
+  detailsButton: {
+    marginTop: 8,
+    alignSelf: 'flex-end',
+  },
+  detailsButtonLabel: {
+    fontSize: 14,
+  },
 });

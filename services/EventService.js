@@ -5,13 +5,15 @@ import {
   getDoc,
   doc,
   addDoc,
+  setDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
   serverTimestamp,
 } from 'firebase/firestore'
-import { signInAnonymously } from 'firebase/auth'
-import { db, auth } from '../config/firebaseConfig'
+import { signInAnonymously } from 'firebase/auth'  
+import { db, auth } from '../config/firebaseConfig'       
 
 const EventService = {
   /**
@@ -20,7 +22,8 @@ const EventService = {
    */
   async fetchEvents() {
     if (!auth.currentUser) {
-      await signInAnonymously(auth)
+      console.warn("No user signed in; returning empty event list.")
+      return []
     }
     const q = query(
       collection(db, 'events'),
@@ -34,16 +37,14 @@ const EventService = {
   /**
    * Fetch a single event by its document ID
    * @param {string} id
-   * @returns {Promise<{id: string, ...}>}
+   * @returns {Promise<{id: string, ...} | null>}
    */
   async fetchEventById(id) {
-    if (!auth.currentUser) {
-      await signInAnonymously(auth)
-    }
     const ref = doc(db, 'events', id)
     const snapshot = await getDoc(ref)
     if (!snapshot.exists()) {
-      throw new Error(`Event with id "${id}" not found`)
+      console.warn(`Event ${id} not found.`)
+      return null
     }
     return { id: snapshot.id, ...snapshot.data() }
   },
@@ -55,8 +56,13 @@ const EventService = {
    */
   async saveEvent(eventData) {
     if (!auth.currentUser) {
+      console.log("Signing in anonymously before saving event…")
       await signInAnonymously(auth)
     }
+    if (!auth.currentUser) {
+      throw new Error("Unable to sign in.")
+    }
+
     const payload = {
       ...eventData,
       userId:     auth.currentUser.uid,
@@ -65,6 +71,38 @@ const EventService = {
     }
     const docRef = await addDoc(collection(db, 'events'), payload)
     return docRef.id
+  },
+
+  /**
+   * Update an existing event by its ID
+   * @param {string} id
+   * @param {Object} eventData
+   */
+  async updateEvent(id, eventData) {
+    if (!auth.currentUser) {
+      console.log("Signing in anonymously before updating event…")
+      await signInAnonymously(auth)
+    }
+    if (!auth.currentUser) {
+      throw new Error("Unable to sign in.")
+    }
+
+    const ref = doc(db, 'events', id)
+    const payload = {
+      ...eventData,
+      updatedAt: serverTimestamp(),
+    }
+    // merge:true means we only overwrite the fields we pass
+    await setDoc(ref, payload, { merge: true })
+  },
+
+  // Delete an event by its ID
+  async deleteEvent(id) {
+    if (!auth.currentUser) {
+      throw new Error('Not signed in')
+    }
+    const ref = doc(db, 'events', id)
+    await deleteDoc(ref)
   },
 }
 

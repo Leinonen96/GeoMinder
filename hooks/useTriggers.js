@@ -1,75 +1,92 @@
-// hooks/useTriggers.js
+import { useState, useEffect, useCallback } from 'react';
 
-import { useState, useEffect, useCallback } from 'react'
-
+/**
+ * Manages trigger state for event geofences
+ * Handles adding, editing, and removing triggers while integrating with navigation
+ */
 export default function useTriggers(navigation, route) {
-  const [triggers, setTriggers] = useState([])
+  const [triggers, setTriggers] = useState([]);
 
-  // Handle trigger-location selection via params from SelectTrigger screen
+  // Handle trigger updates from navigation params (after selecting location/radius)
   useEffect(() => {
-    const { triggerIndex, selectedLocation, selectedRadius } = route.params || {}
+    const { triggerIndex, selectedLocation, selectedRadius } = route.params || {};
 
+    // Process location selection when all params are available
     if (
-      typeof triggerIndex === 'number' &&
-      selectedLocation &&
+      typeof triggerIndex === 'number' && 
+      selectedLocation && 
       typeof selectedRadius === 'number'
     ) {
       setTriggers((ts) => {
-        const copy = [...ts]
+        const copy = [...ts];
         copy[triggerIndex] = {
           ...copy[triggerIndex],
-          location: selectedLocation,
+          location: selectedLocation, 
           radius: selectedRadius,
-        }
-        return copy
-      })
+        };
+        return copy;
+      });
 
-      // reset params so it doesn’t re-fire
+      // Reset params to prevent re-processing on screen focus
       navigation.setParams({
         triggerIndex: undefined,
         selectedLocation: undefined,
         selectedRadius: undefined,
-      })
+      });
     }
   }, [
     route.params?.triggerIndex,
     route.params?.selectedLocation,
     route.params?.selectedRadius,
     navigation,
-  ])
+  ]);
 
-  // Add a new trigger with default values
+  /**
+   * Adds a new trigger with default values
+   */
   const addTrigger = useCallback(() => {
     setTriggers((ts) => [
       ...ts,
       { vibrate: true, sound: true, location: null, radius: 100 },
-    ])
-  }, [])
+    ]);
+  }, []);
 
-  // Toggle vibrate or sound for trigger at index
+  /**
+   * Toggles a boolean property for a trigger
+   * @param {number} index Trigger index
+   * @param {'vibrate'|'sound'} key Property to toggle
+   */
   const toggleTrigger = useCallback((index, key) => {
     setTriggers((ts) => {
-      const copy = [...ts]
-      copy[index][key] = !copy[index][key]
-      return copy
-    })
-  }, [])
+      const copy = [...ts];
+      if (copy[index] && typeof copy[index][key] === 'boolean') {
+         copy[index][key] = !copy[index][key];
+      }
+      return copy;
+    });
+  }, []);
 
-  // Remove trigger by index
+  /**
+   * Removes a trigger at specified index
+   */
   const removeTrigger = useCallback((index) => {
-    setTriggers((ts) => ts.filter((_, i) => i !== index))
-  }, [])
+    setTriggers((ts) => ts.filter((_, i) => i !== index));
+  }, []);
 
-  // Update just the location & radius of an existing trigger
+  /**
+   * Updates location and radius for a trigger directly
+   * Alternative to navigation params method
+   */
   const updateTriggerLocation = useCallback((index, location, radius) => {
     setTriggers((ts) => {
-      const copy = [...ts]
-      copy[index] = { ...copy[index], location, radius }
-      return copy
-    })
-  }, [])
+      const copy = [...ts];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], location, radius };
+      }
+      return copy;
+    });
+  }, []);
 
-  // Bulk update triggers (e.g., when saving to storage)
   return {
     triggers,
     setTriggers,
@@ -77,5 +94,5 @@ export default function useTriggers(navigation, route) {
     toggleTrigger,
     removeTrigger,
     updateTriggerLocation,
-  }
+  };
 }
