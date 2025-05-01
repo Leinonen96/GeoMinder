@@ -16,12 +16,31 @@
     "ios": {
       "supportsTablet": true
     },
+    "plugins": [
+      "expo-dev-client",
+      "expo-location",
+      "expo-task-manager",
+      "expo-notifications"
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.GeoMinder"
+      "package": "com.anonymous.GeoMinder",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE"
+      ],
+      "useNextNotificationsApi": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCXrhoqpgbOhX94gdeC78BqcMkEgNoC7K4"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

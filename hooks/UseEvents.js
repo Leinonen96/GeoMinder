@@ -1,4 +1,3 @@
-// hooks/useEvents.js
 import { useState, useEffect, useCallback } from 'react'
 import EventService from '../services/EventService'
 

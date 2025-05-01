@@ -94,6 +94,7 @@ export default function AddEventScreen({ navigation, route }) {
   const handleSave = useCallback(async () => {
     setIsSavingEvent(true);
 
+    // Check if user is signed in
     if (isSigningIn) {
       alert('Waiting for sign-in to complete…');
       setIsSavingEvent(false);
@@ -107,6 +108,8 @@ export default function AddEventScreen({ navigation, route }) {
 
     const combinedStart = combineDateAndTime(startDate, startTime);
     const combinedEnd = combineDateAndTime(endDate, endTime);
+
+    // Validate inputs
     if (!title || !combinedStart || !combinedEnd) {
       alert('Please fill Title, Start date/time and End date/time.');
       setIsSavingEvent(false);
@@ -122,7 +125,6 @@ export default function AddEventScreen({ navigation, route }) {
       thumbnailUrl: thumbnail,
       triggers,
     };
-
     try {
       const newId = await EventService.saveEvent(eventData);
       console.log('Saved event id:', newId);

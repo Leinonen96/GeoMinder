@@ -3,7 +3,10 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Provider as PaperProvider } from 'react-native-paper'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import useGeofencing from './hooks/useGeofencing'
 import './services/firebase'; // Initialize Firebase
+import './tasks/geofenceTask' // Register geofence task
+
 
 import useAuth         from './hooks/useAuth'
 import LoginScreen     from './screens/LoginScreen'
@@ -17,6 +20,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const { user, loading } = useAuth()
+  useGeofencing()
 
   if (loading) {
     return (
