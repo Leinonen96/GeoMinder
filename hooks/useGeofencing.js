@@ -1,14 +1,10 @@
 // hooks/useGeofencing.js
-
 import { useEffect } from 'react'
 import * as Location from 'expo-location'
-import { useEvents } from './UseEvents'
-import {
-  saveTriggers,
-  registerAllGeofences,
-  unregisterAllGeofences,
-} from '../services/geofenceService'
-import { makeIdentifier } from '../utils/geofenceHelpers'
+import { useEvents } from './UseEvents'   // adjust to your filename casing
+import { saveTriggers }     from '../services/geofenceService'
+import { GEOFENCE_TASK }     from '../tasks/geofenceTask'
+import { makeIdentifier }    from '../utils/geofenceHelpers'
 
 export default function useGeofencing() {
   const { events, loading } = useEvents()
@@ -18,17 +14,14 @@ export default function useGeofencing() {
 
     const now = Date.now()
 
-    // Builds only currently‐active triggers
     const allTriggers = events.flatMap(event =>
       (event.triggers || [])
-        .map((trigger, idx) => ({ event, trigger, idx }))
-        
-        .filter(({ trigger }) => trigger.location != null) // check if location is set
-        
-        .filter(({ event }) => { // Check if event is active
-          const startMs = event.startTime.toDate().getTime()
-          const endMs   = event.endTime.toDate().getTime()
-          return now >= startMs && now <= endMs
+        .map((t, idx) => ({ event, trigger: t, idx }))
+        .filter(({ trigger }) => trigger.location != null)
+        .filter(({ event }) => {
+          const start = event.startTime.toDate().getTime()
+          const end   = event.endTime.toDate().getTime()
+          return now >= start && now <= end
         })
         .map(({ event, trigger, idx }) => ({
           identifier: makeIdentifier(event.id, idx),
@@ -43,9 +36,23 @@ export default function useGeofencing() {
     )
 
     ;(async () => {
+      console.log('⚙️ [useGeofencing] registering', allTriggers.length, 'triggers')
       await saveTriggers(allTriggers)
-      await unregisterAllGeofences()
-      await registerAllGeofences()
+
+      try {
+        console.log('⚙️ [useGeofencing] stopping previous geofences')
+        await Location.stopGeofencingAsync(GEOFENCE_TASK)
+      } catch (e) {
+        console.warn('⚙️ stopGeofencingAsync error:', e)
+      }
+
+      try {
+        console.log('⚙️ [useGeofencing] starting geofencing')
+        await Location.startGeofencingAsync(GEOFENCE_TASK, allTriggers)
+        console.log('⚙️ Geofencing started')
+      } catch (e) {
+        console.error('⚙️ startGeofencingAsync error:', e)
+      }
     })()
   }, [events, loading])
 }

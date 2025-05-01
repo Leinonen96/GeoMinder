@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useCurrentLocation } from '../hooks/useCurrentLocation';
 
@@ -39,6 +39,7 @@ export default function SelectLocationScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={initialLocation}
         onRegionChangeComplete={onRegionChangeComplete}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Dimensions, View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import * as Location from 'expo-location'
 import { ActivityIndicator, useTheme } from 'react-native-paper'
 import { useFocusEffect } from '@react-navigation/native'
@@ -75,6 +75,7 @@ export default function MapScreen({ navigation }) {
     <View style={styles.container}>
       <MapView
         ref={mapRef}
+        provider={PROVIDER_GOOGLE} // Use Google Maps on Android
         style={styles.map}
         region={region}
         showsUserLocation
