@@ -22,9 +22,9 @@ GeoMinder is a mobile application built with React Native for creating location-
 - **Location Services**: Uses foreground and background tracking for geofencing.
 - **Geofencing**: Monitors predefined areas and triggers entry events via background tasks.
 - **Notifications**: Sends local alerts when geofence triggers activate.
-- **Data Persistence**: Stores event data in Firestore; cached triggers in AsyncStorage; images in Firebase Storage.
+- **Data Persistence**: Stores event data in Firestore; cached triggers in AsyncStorage.
 - **Image Handling**: Users select device images, upload to Firebase Storage, and link URLs in Firestore.
-- **Navigation**: Smooth flow with Stack and Tab navigators.
+- **Navigation**: Stack and Tab navigators.
 - **Background Tasks**: Defines a dedicated geofence entry task for notifications.
 
 ## Project Structure
