@@ -14,8 +14,8 @@ GeoMinder is a mobile application built with React Native for creating location-
 - **React Native Paper**: A Material Design component library for consistent, cross‑platform UI.
 - **Expo Location & TaskManager**:
   - **Location**: Accesses device location and implements geofencing boundaries.
-  - **TaskManager**: Runs background tasks for geofence monitoring and notification triggers, even when the app is closed.
-- **AsyncStorage**: Local key‑value storage for persisting geofence trigger details so background tasks can access them without network calls.
+  - **TaskManager**: Runs background tasks for geofence monitoring and notification triggers.
+- **AsyncStorage**: Local Storage for persisting geofence trigger details so background tasks can access them without network calls.
 
 ## Key Features & Capabilities
 
