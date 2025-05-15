@@ -8,7 +8,7 @@ GeoMinder is a mobile application built with React Native for creating location-
 - **Expo**: Provides modules and tools for building universal React Native apps quickly, including development builds, location services, notifications, and background tasks.
 - **Firebase**:
   - **Firestore**: A NoSQL cloud database storing event data (title, description, times, location, triggers, and image URLs) in real time.
-  - **Authentication**: Manages user authentication (anonymous sign‑in) for secure, user‑specific data access.
+  - **Authentication**: Manages user authentication for secure, user‑specific data access.
   - **Storage**: Stores event images; Firestore holds the download URLs.
 - **React Navigation**: Implements Stack and Tab navigators to manage screens (List, Map, Add/Edit Event, Location/Trigger Selection).
 - **React Native Paper**: A Material Design component library for consistent, cross‑platform UI.
