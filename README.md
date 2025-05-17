@@ -31,7 +31,6 @@ GeoMinder is a mobile application built with React Native for creating location-
 
 ```
 app/
-├─ assets/               # Static assets (images, fonts)
 ├─ components/           # Reusable UI components (EventCard, AddEventButton)
 ├─ config/               # Configuration (firebaseConfig, googleConfig)
 ├─ hooks/                # Custom hooks (useAuth, useEvents, usePermissions, useGeofencing, useTriggers)
